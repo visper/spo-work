@@ -1,0 +1,27 @@
+#include <stdio.h>
+
+int main()
+{
+	struct num {
+                int num1 = 1;
+                int num2 = 10;
+                int num3 = 100;
+                int num4 = 1000;
+                int num5 = 10000;
+                int num6 = 2;
+                int num7 = 20;
+                int num8 = 200;
+                int num9 = 2000;
+                int num10 = 20000;
+
+
+
+
+	}
+
+
+
+
+
+	return 0;
+}

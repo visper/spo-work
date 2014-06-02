@@ -1,0 +1,110 @@
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include <errno.h>
+                                                            
+#define SEMKEY    75
+int semid;
+unsigned int count;                                        
+/* определение структуры sembuf в файле sys/sem.h          
+ * struct sembuf {                                        
+ *     unsigned shortsem_num;                              
+ *     short sem_op;                                       
+ *     short sem_flg;                                      
+ }; */                                                      
+struct sembuf psembuf,vsembuf;    /* операции типа P и V */
+
+main(argc,argv)                                            
+      int argc;                                             
+      char *argv[];                                         
+{                                                          
+	int i,first,second;                                   
+	short initarray[2],outarray[2];                       
+	extern cleanup();                                     
+	
+	if (argc == 1)                                        
+	{                                                     
+		for (i = 0; i < 20; i++)                          
+			signal(i,cleanup);                            
+
+		errno = 0;
+//		int shmid = shmget(25, 40, IPC_CREAT | IPC_EXCL | 0777);
+		int shmid = shmget(25, 40 * sizeof(char), IPC_CREAT | 0777);
+		printf("error after shmget: %i\n", errno);
+		if(shmid == -1) {
+			fprintf(stderr, "shmget() error\n");
+			return -1;
+		}
+
+		char* addr;
+
+		errno = 0;
+		addr = (char*)shmat(shmid, 0, 0);
+		printf("error after shmat: %i\n", errno);
+
+		if(addr == (char*)-1) {
+			fprintf(stderr, "shmat() error\n");
+			return -1;
+		}
+//		int *pint;
+//		pint = (int*)addr;
+//		printf("0x%x\n", pint);
+//		*pint = 111;
+
+		printf("echo\n");
+		*addr = 111;
+
+		printf("echo\n");
+
+		semid = semget(SEMKEY,1,0777|IPC_CREAT);          
+		initarray[0] = initarray[1] = 1;                  
+		semctl(semid,1,SETALL,initarray);                 
+		semctl(semid,1,GETALL,outarray);                  
+//		printf("%i\n", *pint);
+		printf("%i\n", *addr);
+		printf("начальные значения семафоров %d %d\n",    
+		       outarray[0],outarray[1]);                  
+		printf("test\n");
+		pause();    /* приостанов до получения сигнала */ 
+	}                                                     
+	
+	else if (argv[1][0] == 'a')                           
+	{                                                     
+		first = 0;                                        
+		second = 1;                                       
+	}                                                     
+	else                                                  
+	{                                                     
+		first = 1;                                        
+		second = 0;                                       
+	}                                                     
+	
+	semid = semget(SEMKEY,2,0777);                        
+	psembuf.sem_op = -1;                                  
+	psembuf.sem_flg = SEM_UNDO;                           
+	vsembuf.sem_op = 1;                                   
+	vsembuf.sem_flg = SEM_UNDO;                           
+                                                            
+	for (count = 0; ; count++)                            
+	{                                                     
+		psembuf.sem_num = first;                          
+		semop(semid,&psembuf,1);                          
+		psembuf.sem_num = second;                         
+		semop(semid,&psembuf,1);                          
+		printf("процесс %d счетчик %d\n",getpid(),count); 
+		vsembuf.sem_num = second;                         
+		semop(semid,&vsembuf,1);                          
+		vsembuf.sem_num = first;                          
+		semop(semid,&vsembuf,1);                          
+	}                                                     
+}                                                          
+
+cleanup()                                                  
+{                                                          
+	semctl(semid,2,IPC_RMID,0);                       
+	exit(-1);                                           
+}                                   

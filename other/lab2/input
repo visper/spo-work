@@ -1,0 +1,5 @@
+whenever i use getline() function
+What does this warning mean actually ?
+Is this a serious warning, or just ignorable.
+Cheer!!
+getline() is c++ not C. There is no standard C getline() function.

@@ -1,0 +1,88 @@
+/*
+Процесс 1 порождает потомка 2, они присоединяют к себе разделяемую память
+объемом (N*sizeof(int)). Процесс 1 пишет в нее k1 чисел сразу,
+процесс 2 переписывает k2 чисел из памяти в файл.
+Процесс 1 может производить запись, только если в памяти достаточно места,
+а процесс 2 переписывать, только если имеется не меньше, чем k2 чисел.
+После каждой записи (чтения) процессы засыпают на t секунд.
+После каждой записи процесс 1 увеличивает значение записываемых чисел на 1.
+Используя семафоры, обеспечить синхронизацию работы процессов в соответствии
+с заданными условиями: 18 вариант: N=10, k1=10, k2=5, t=1c.
+*/
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <unistd.h> // sleep
+
+#define KEY          9001
+#define SIZE         10//(N)
+#define SLEEP_TIME   1
+#define K1           10
+#define K2           5
+
+int main(int argc, char** argv)
+{
+	// SIZE/2 because 5byte is 10 integers
+	// id of mem
+	int memid = shmget((key_t)KEY, SIZE/2, 0777 | IPC_CREAT);
+	if(memid == -1) {
+		perror("error memid alloc")
+			return -1;
+	}
+
+	//take id of key of semapfore
+	int semid = semget((key_t)KEY, 1, 0);
+
+
+	char *addr = (char*)shmat(memid, 0, 0);
+
+
+	int pid1 = 0, pid2 = 0;
+	pid1 = getpid();
+	if((pid2 = fork()) == 0) { //child
+		pid2 = getpid();
+
+
+
+
+
+		sleep(1);
+	}
+	else if(pid2 > 0) { // parent
+
+
+		//numbers for write
+		int num1 = 1;
+		int num2 = 10;
+		int num3 = 100;
+		int num4 = 1000;
+		int num5 = 10000;
+		int num6 = 2;
+		int num7 = 20;
+		int num8 = 200;
+		int num9 = 2000;
+		int num10 = 20000;
+
+		//loop for increment
+		for(size_t i = 0; i < K1; ++i) {
+			num1++;
+			num2++;
+			num3++;
+			num4++;
+			num5++;
+			num6++;
+			num7++;
+			num8++;
+			num9++;
+			num10++;
+		}
+
+		sleep(1);
+	}
+	else {
+		perror("fork error");
+		return -1;
+	}
+
+	return 0;
+}
